@@ -373,17 +373,18 @@ libxaw7 libtinfo5 libxkbcommon-dev libnss3 libwebpdemux2 libxslt1.1 libfaad2 \
 libinput10 libpixman-1-0 libxkbcommon0 libpng16-16 libfontconfig1 libxcb-shm0 \
 libxcb-render0 libxrender1 libthai0 libharfbuzz0b libcolord2 libpangocairo-1.0-0 \
 libxcb-composite0 libxcb-xfixes0 libatk-bridge2.0-0 libatk1.0-0 libcurl4 \
-libdc1394-22 libmodplug1 libsoup2.4-1 librsvg2-2 libopenmpt0 libmpcdec6 libzbar0 \
-libbs2b0 libvpx6 libv4l-0 libavfilter7 libvo-aacenc0 libgdk-pixbuf2.0-0 libde265-0 \
+libdc1394-25 libmodplug1 libsoup2.4-1 librsvg2-2 libopenmpt0 libmpcdec6 libzbar0 \
+libbs2b0 libvpx7 libv4l-0 libavfilter7 libvo-aacenc0 libgdk-pixbuf2.0-0 libde265-0 \
 libmms0 libmjpegutils-2.1-0 libvo-amrwbenc0 libwildmidi2 libmpeg2encpp-2.1-0 \
-libvisual-0.4-0 libsrt1 libtag1-dev libcaca0 libavfilter7 libcodec2-0.9 libxdamage1 \
-libshout3 libchromaprint1 libusrsctp1 libjack0 libsbc1 libmplex2-2.1-0 libavc1394-0 \
-libsoundtouch1 libfluidsynth2 libshout3 libdca0 libofa0 libsrtp2-1 libdv4 libkate1 \
-libwebrtc-audio-processing1 libaa1 libnice10 libcurl4-gnutls-dev libdvdnav4 libnspr4 \
-libiec61883-0 libgraphene-1.0-0 libspandsp2 liborc-0.4-0 libcdparanoia0 liba52-0.7.4 \
-libcdio18 libmpeg2-4 libopencore-amrnb0 libopencore-amrwb0 libsidplay1v5 libilmbase24 \
-libopenexr24 libxv1 libx11-xcb1 libtheora0 nettle-bin nettle-dev googletest mpg123 \
-libsoup2.4-dev libassimp5 gtk-update-icon-cache hicolor-icon-theme
+libvisual-0.4-0 libsrt1.4-openssl  libsrt1.4-gnutls libtag1-dev libcaca0 libavfilter7 \
+libcodec2-1.0 libxdamage1 libshout3 libchromaprint1 libusrsctp2 libjack0 libsbc1 \
+libmplex2-2.1-0 libavc1394-0 libsoundtouch1 libfluidsynth3 libshout3 libdca0 libofa0 \
+libsrtp2-1 libdv4 libkate1 libwebrtc-audio-processing1 libaa1 libnice10 \
+libcurl4-gnutls-dev libdvdnav4 libnspr4 libiec61883-0 libgraphene-1.0-0 libspandsp2 \
+liborc-0.4-0 libcdparanoia0 liba52-0.7.4 libcdio19 libmpeg2-4 libopencore-amrnb0 \ 
+libopencore-amrwb0 libsidplay1v5 libilmbase25 libopenexr25 libxv1 libx11-xcb1 \
+libtheora0 nettle-bin nettle-dev googletest mpg123 libsoup2.4-dev libassimp5 \
+gtk-update-icon-cache hicolor-icon-theme 
 
 # GPU benchmark tools
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
