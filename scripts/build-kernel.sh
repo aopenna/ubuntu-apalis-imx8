@@ -1,5 +1,11 @@
 #!/bin/bash
 
+echo ""
+echo "#######################"
+echo "##  build-kernel.sh  ##"
+echo "#######################"
+echo ""
+
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
 
@@ -44,3 +50,4 @@ if [ ! -d device-tree-overlays ]; then
 fi
 cd device-tree-overlays/overlays
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- STAGING_KERNEL_DIR="$(readlink -f ../../linux-toradex)"
+echo "Finished build-kernel.sh"

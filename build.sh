@@ -9,13 +9,13 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # Build the imx boot container and U-Boot
-./scripts/build-imx-boot.sh
+time ./scripts/build-imx-boot.sh
 
 # Build the Linux kernel and Device Tree Blobs
-./scripts/build-kernel.sh
+time ./scripts/build-kernel.sh
 
 # Build the root file system
-./scripts/build-rootfs.sh
+time ./scripts/build-rootfs.sh
 
 # Build the Ubuntu preinstalled images
-./scripts/build-image.sh
+time ./scripts/build-image.sh

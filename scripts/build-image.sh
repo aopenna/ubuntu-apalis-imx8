@@ -1,5 +1,11 @@
 #!/bin/bash
 
+echo ""
+echo "#######################"
+echo "##  build-image.sh   ##"
+echo "#######################"
+echo ""
+
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
 
@@ -30,7 +36,7 @@ for rootfs in *.rootfs.tar.xz; do
 
     # Create an empty disk image
     img="../images/$(basename "${rootfs}" .rootfs.tar.xz).img"
-    size="$(xz --robot -l "${rootfs}" | tail -n +2 | awk '{print int($5/1048576 + 1)}')"
+    size="$(xz --robot -l "${rootfs}" | tail -n +3 | awk '{print int($5/1048576 + 1)}')"
     truncate -s "$(( size + 2048 + 512 ))M" "${img}"
 
     # Create loop device for disk image
@@ -154,11 +160,10 @@ EOF
     # Copy device tree overlays
     mkdir -p ${mount_point}/boot/overlays
     cp device-tree-overlays/overlays/apalis-*.dtbo ${mount_point}/boot/overlays
-    cp device-tree-overlays/overlays/display-*.dtbo ${mount_point}/boot/overlays
 
     # Copy hdmi firmware
-    cp firmware-imx-8.15/firmware/hdmi/cadence/dpfw.bin ${mount_point}/boot
-    cp firmware-imx-8.15/firmware/hdmi/cadence/hdmitxfw.bin ${mount_point}/boot
+    cp firmware-imx-8.18.1/firmware/hdmi/cadence/dpfw.bin ${mount_point}/boot
+    cp firmware-imx-8.18.1/firmware/hdmi/cadence/hdmitxfw.bin ${mount_point}/boot
 
     sync --file-system
     sync
@@ -174,3 +179,4 @@ EOF
     xz -9 --extreme --force --keep --quiet --threads=0 "${img}"
     rm -f "${img}"
 done
+echo "Finished build-image.sh"
