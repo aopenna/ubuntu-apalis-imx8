@@ -62,7 +62,6 @@ cd ..
 
 # Download and build the boot container
 if [ ! -d imx-mkimage ]; then
-#    git clone --depth=1 --progress -b imx_5.4.70_2.3.0 https://github.com/nxp-imx/imx-mkimage/
     git clone --depth=1 --progress -b lf-5.15.71_2.2.0 https://github.com/nxp-imx/imx-mkimage/
 fi
 cd imx-mkimage
