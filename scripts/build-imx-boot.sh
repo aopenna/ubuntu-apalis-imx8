@@ -17,11 +17,11 @@ cd "$(dirname -- "$(readlink -f -- "$0")")" && cd ..
 mkdir -p build && cd build
 
 # Download and extract the Security Controller (SECO) Firmware
-if [ ! -d imx-seco-5.9.0 ]; then
-    wget -nc https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-seco-5.9.0.bin
-    chmod u+x imx-seco-5.9.0.bin
-    ./imx-seco-5.9.0.bin --auto-accept --force
-    rm -f imx-seco-5.9.0.bin
+if [ ! -d imx-seco-5.8.6 ]; then
+    wget -nc https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/imx-seco-5.8.7.bin
+    chmod u+x imx-seco-5.8.7.bin
+    ./imx-seco-5.8.7.bin --auto-accept --force
+    rm -f imx-seco-5.8.7.bin
 fi
 
 # Download and extract the IMX Firmware
@@ -40,15 +40,23 @@ fi
 
 # Download and build the ARM Trusted Firmware (ATF)
 if [ ! -d imx-atf ]; then
-    git clone --depth=1 --progress -b toradex_imx_5.4.70_2.3.0 git://git.toradex.com/imx-atf.git 
+#    git clone --depth=1 --progress -b toradex_imx_5.4.70_2.3.0 git://git.toradex.com/imx-atf.git 
+    git clone --depth=1 --progress -b lf_v2.6 https://github.com/nxp-imx/imx-atf.git
 fi
 cd imx-atf
+if git apply --check ../../patches/atf-toradex/0001-Revert-Add-NXP-s-SoCs-partition-reboot-support.patch > /dev/null 2>&1; then
+    git apply ../../patches/atf-toradex/0001-Revert-Add-NXP-s-SoCs-partition-reboot-support.patch
+fi
+if git apply --check ../../patches/atf-toradex/0002-imx8m-hab.c-work-around-gcc-12.1-false-positives.patch > /dev/null 2>&1; then
+    git apply ../../patches/atf-toradex/0002-imx8m-hab.c-work-around-gcc-12.1-false-positives.patch
+fi
 make PLAT=imx8qm CROSS_COMPILE=aarch64-linux-gnu- bl31
 cd ..
 
 # Download and build u-boot
 if [ ! -d u-boot-toradex ]; then
-    git clone --depth=1 --progress -b toradex_imx_v2020.04_5.4.70_2.3.0 git://git.toradex.com/u-boot-toradex.git
+#    git clone --depth=1 --progress -b toradex_imx_v2020.04_5.4.70_2.3.0 git://git.toradex.com/u-boot-toradex.git
+    git clone --depth=1 --progress -b toradex_imx_lf_v2022.04 git://git.toradex.com/u-boot-toradex.git
 fi
 cd u-boot-toradex
 if git apply --check ../../patches/u-boot-toradex/0001-usb-first-boot-target.patch > /dev/null 2>&1; then
@@ -57,7 +65,7 @@ fi
 cp ../scfw-bin/mx8qm-apalis-scfw-tcm.bin mx8qm-apalis-scfw-tcm.bin
 cp ../imx-atf/build/imx8qm/release/bl31.bin bl31.bin
 make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- apalis-imx8_defconfig
-make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j "$(nproc)"
+make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j "$(nproc)" 2>&1 | tee build.log
 cd ..
 
 # Download and build the boot container
@@ -66,7 +74,7 @@ if [ ! -d imx-mkimage ]; then
     git clone --depth=1 --progress -b lf-5.15.71_2.2.0 https://github.com/nxp-imx/imx-mkimage/
 fi
 cd imx-mkimage
-cp ../imx-seco-5.9.0/firmware/seco/mx8qmb0-ahab-container.img iMX8QM/mx8qmb0-ahab-container.img
+cp ../imx-seco-5.8.7/firmware/seco/mx8qmb0-ahab-container.img iMX8QM/mx8qmb0-ahab-container.img
 cp ../scfw-bin/mx8qm-apalis-scfw-tcm.bin iMX8QM/scfw_tcm.bin
 cp ../imx-atf/build/imx8qm/release/bl31.bin iMX8QM/bl31.bin
 cp ../u-boot-toradex/u-boot.bin iMX8QM/u-boot.bin

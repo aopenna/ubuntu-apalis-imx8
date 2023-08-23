@@ -17,19 +17,19 @@ fi
 cd "$(dirname -- "$(readlink -f -- "$0")")" && cd ..
 mkdir -p build && cd build
 
-# Download the toradex linux kernel source
+echo "# Download the toradex linux kernel source"
 if [ ! -d linux-toradex ]; then
 #    git clone --depth=1 --progress -b toradex_5.4-2.3.x-imx git://git.toradex.com/linux-toradex.git
     git clone --depth=1 --progress -b toradex_5.15-2.1.x-imx git://git.toradex.com/linux-toradex.git
 fi
 cd linux-toradex
 
-# Apply git patch if not already applied
+echo "# Apply git patch if not already applied"
 if git apply --check ../../patches/linux-toradex/0001-increase-spi-fifo-size.patch > /dev/null 2>&1; then
     git apply ../../patches/linux-toradex/0001-increase-spi-fifo-size.patch
 fi
 
-# Set kernel config 
+echo "# Set kernel config"
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
 ./scripts/config --disable CONFIG_DEBUG_INFO
 
@@ -39,8 +39,8 @@ echo "-toradex" > .scmversion
 echo "0" > .version
 
 # Compile kernel into deb package
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS="-@" -j "$(nproc)"
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS="-@" -j "$(nproc)" bindeb-pkg
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS="-@" freescale/imx8qm-apalis-v1.1-ixora-v1.2.dtb -j "$(nproc)"
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- DTC_FLAGS="-@" freescale/imx8qm-apalis-v1.1-ixora-v1.2.dtb -j "$(nproc)" bindeb-pkg
 cd ..
 
 # Download and build the device tree overlays

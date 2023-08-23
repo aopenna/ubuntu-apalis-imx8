@@ -1,0 +1,46 @@
+From d1dccc8d9e4ff70a742340eb11ea48ae2b88f035 Mon Sep 17 00:00:00 2001
+From: Max Krummenacher <max.krummenacher@toradex.com>
+Date: Mon, 16 May 2022 17:41:23 +0000
+Subject: [PATCH 2/2] imx8m/hab.c: work around gcc 12.1 false positives
+
+| plat/imx/imx8m/hab.c: In function 'imx_hab_handler':
+| plat/imx/imx8m/hab.c:64:57: error: array subscript 0 is outside array bounds of 'uint32_t[0]' {aka 'unsigned int[]'} [-Werror=array-bounds]
+|    64 | #define HAB_RVT_CHECK_TARGET_ARM64      ((unsigned long)*(uint32_t *)(HAB_RVT_BASE + 0x18))
+|       |                                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Signed-off-by: Max Krummenacher <max.krummenacher@toradex.com>
+---
+ plat/imx/imx8m/hab.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/plat/imx/imx8m/hab.c b/plat/imx/imx8m/hab.c
+index 2e5154367..658e14bb4 100644
+--- a/plat/imx/imx8m/hab.c
++++ b/plat/imx/imx8m/hab.c
+@@ -89,6 +89,15 @@ int imx_hab_handler(uint32_t smc_fid, u_register_t x1, u_register_t x2,
+ 	hab_rvt_failsafe_t *hab_rvt_failsafe;
+ 	hab_rvt_check_target_t *hab_rvt_check_target;
+ 
++/* work around gcc 12.1 false positives */
++/*
++| plat/imx/imx8m/hab.c: In function 'imx_hab_handler':
++| plat/imx/imx8m/hab.c:64:57: error: array subscript 0 is outside array bounds of 'uint32_t[0]' {aka 'unsigned int[]'} [-Werror=array-bounds]
++|    64 | #define HAB_RVT_CHECK_TARGET_ARM64      ((unsigned long)*(uint32_t *)(HAB_RVT_BASE + 0x18))
++|       |                                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++*/
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Warray-bounds"
+ 	switch(x1) {
+ 	case IMX_SIP_HAB_AUTHENTICATE:
+ 		hab_rvt_authenticate_image = hab_rvt_authenticate_image_p;
+@@ -116,6 +125,7 @@ int imx_hab_handler(uint32_t smc_fid, u_register_t x1, u_register_t x2,
+ 		return SMC_UNK;
+ 
+ 	};
++#pragma GCC diagnostic pop
+ 
+ 	return 0;
+ }
+-- 
+2.37.0
+
