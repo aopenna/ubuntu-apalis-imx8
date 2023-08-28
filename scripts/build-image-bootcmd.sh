@@ -288,7 +288,7 @@ run bootcmd_prepare
 run bootcmd_run
 EOF
     mkimage -A arm64 -O linux -T script -C none -n "Boot Script" -d ${mount_point}/boot/boot.cmd ${mount_point}/boot/boot.scr
-p
+
     # Copy device tree blobs
     cp linux-toradex/arch/arm64/boot/dts/freescale/imx8qm-apalis-*.dtb ${mount_point}/boot
     cp linux-toradex/arch/arm64/boot/dts/freescale/imx8qp-apalis-*.dtb ${mount_point}/boot
@@ -298,8 +298,8 @@ p
     cp device-tree-overlays/overlays/apalis-*.dtbo ${mount_point}/boot/overlays
 
     # Copy hdmi firmware
-    cp firmware-imx-8.18.1/firmware/hdmi/cadence/dpfw.bin ${mount_point}/boot
-    cp firmware-imx-8.18.1/firmware/hdmi/cadence/hdmitxfw.bin ${mount_point}/boot
+    cp firmware-imx-8.17/firmware/hdmi/cadence/dpfw.bin ${mount_point}/boot
+    cp firmware-imx-8.17/firmware/hdmi/cadence/hdmitxfw.bin ${mount_point}/boot
 
     sync --file-system
     sync
