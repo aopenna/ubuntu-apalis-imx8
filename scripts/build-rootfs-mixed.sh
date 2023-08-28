@@ -23,11 +23,11 @@ if [ ! -d linux-toradex ]; then
 fi
 
 # Download and extract the IMX Firmware
-if [ ! -d firmware-imx-8.15 ]; then
-    wget -nc https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/firmware-imx-8.15.bin
-    chmod u+x firmware-imx-8.15.bin
-    ./firmware-imx-8.15.bin --auto-accept --force
-    rm -f firmware-imx-8.15.bin
+if [ ! -d firmware-imx-8.17 ]; then
+    wget -nc https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/firmware-imx-8.17.bin
+    chmod u+x firmware-imx-8.17.bin
+    ./firmware-imx-8.17.bin --auto-accept --force
+    rm -f firmware-imx-8.17.bin
 fi
 
 # These env vars can cause issues with chroot
@@ -346,11 +346,11 @@ sed -i 's/^Prompt.*/Prompt=never/' ${chroot_dir}/etc/update-manager/release-upgr
 
 echo "# Copy the hdmi firmware"
 mkdir -p ${chroot_dir}/lib/firmware/imx/hdmi
-cp firmware-imx-8.15/firmware/hdmi/cadence/* ${chroot_dir}/lib/firmware/imx/hdmi
+cp firmware-imx-8.17/firmware/hdmi/cadence/* ${chroot_dir}/lib/firmware/imx/hdmi
 
 echo "# Copy the vpu firmware"
 mkdir -p ${chroot_dir}/lib/firmware/vpu
-cp firmware-imx-8.15/firmware/vpu/* ${chroot_dir}/lib/firmware/vpu
+cp firmware-imx-8.17/firmware/vpu/* ${chroot_dir}/lib/firmware/vpu
 
 # Umount the temporary API filesystems
 umount -lf ${chroot_dir}/dev/pts 2> /dev/null || true

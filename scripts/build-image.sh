@@ -162,8 +162,8 @@ EOF
     cp device-tree-overlays/overlays/apalis-*.dtbo ${mount_point}/boot/overlays
 
     # Copy hdmi firmware
-    cp firmware-imx-8.18.1/firmware/hdmi/cadence/dpfw.bin ${mount_point}/boot
-    cp firmware-imx-8.18.1/firmware/hdmi/cadence/hdmitxfw.bin ${mount_point}/boot
+    cp firmware-imx-8.17/firmware/hdmi/cadence/dpfw.bin ${mount_point}/boot
+    cp firmware-imx-8.17/firmware/hdmi/cadence/hdmitxfw.bin ${mount_point}/boot
 
     sync --file-system
     sync

@@ -38,13 +38,13 @@ if [ ! -d scfw-bin ]; then
 #    wget https://github.com/toradex/i.MX-System-Controller-Firmware/raw/d8d7320aec228cd73c4512a92d55c900786873e0/src/scfw_export_mx8qx_b0/build_mx8qx_b0/mx8qm-apalis-scfw-tcm.bin -O scfw-tcm.bin
 #    wget -nc https://github.com/toradex/i.MX-System-Controller-Firmware/raw/master/src/scfw_export_mx8qm_b0/build_mx8qm_b0/mx8qm-apalis-scfw-tcm.bin -P scfw-bin
     mkdir -p scfw-bin && cd scfw-bin
-    git clone https://github.com/toradex/i.MX-System-Controller-Firmware.git
+    git clone --depth=1 https://github.com/toradex/i.MX-System-Controller-Firmware.git
     mv ./i.MX-System-Controller-Firmware/src/scfw_export_mx8qm_b0/build_mx8qm_b0/mx8qm-apalis-scfw-tcm.bin ./mx8qm-apalis-scfw-tcm.bin
 fi
 
 # Download and build the ARM Trusted Firmware (ATF)
 if [ ! -d imx-atf ]; then
-    git clone --progress -b lf_2.6 git://github.com/nxp-imx/imx-atf.git 
+    git clone --progress -b lf_v2.6 https://github.com/nxp-imx/imx-atf.git 
 fi
 cd imx-atf
 if git apply --check ../../patches/imx-atf/0001-Revert-Add-NXP-s-SoCs-partition-reboot-support.patch > /dev/null 2>&1; then
@@ -58,7 +58,7 @@ cd ..
 
 # Download and build u-boot
 if [ ! -d u-boot-toradex ]; then
-    git clone --depth=1 --progress -b toradex_imx_lf_v2020.04 git://git.toradex.com/u-boot-toradex.git
+    git clone --depth=1 --progress -b toradex_imx_lf_v2022.04 git://git.toradex.com/u-boot-toradex.git
 fi
 cd u-boot-toradex
 if git apply --check ../../patches/u-boot-toradex/0001-usb-first-boot-target.patch > /dev/null 2>&1; then
@@ -72,7 +72,7 @@ cd ..
 
 # Download and build the boot container
 if [ ! -d imx-mkimage ]; then
-    git clone --progress -b lf-5.15.32_2.0.0 https://github.com/nxp-imx/imx-mkimage/
+    git clone --depth=1 --progress -b lf-5.15.32_2.0.0 https://github.com/nxp-imx/imx-mkimage/
 fi
 cd imx-mkimage
 cp ../imx-seco-5.8.7.1/firmware/seco/mx8qmb0-ahab-container.img iMX8QM/mx8qmb0-ahab-container.img
