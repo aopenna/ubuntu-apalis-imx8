@@ -141,9 +141,6 @@ EOF
 
     # Uboot script
     cat > ${mount_point}/boot/boot.cmd << EOF
-#
-# Toradex Boot.cmd for yocto:
-#
 # Copyright 2020 Toradex
 #
 # Toradex boot script.
