@@ -142,13 +142,23 @@ EOF
     # Uboot script
     cat > ${mount_point}/boot/boot.cmd << EOF
 env set bootargs "root=UUID=${root_uuid} console=ttyLP1,115200 console=tty1 pci=nomsi rootfstype=ext4 rootwait rw"
+echo "Loading device tree overlay: imx8qm-apalis-v1.1-ixora-v1.2.dtb"
 fatload \${devtype} \${devnum}:1 \${fdt_addr_r} /imx8qm-apalis-v1.1-ixora-v1.2.dtb
-fdt addr \${fdt_addr_r} && fdt resize 0x2000
+fdt addr \${fdt_addr_r} && fdt resize 0x20000
+echo "Aplying device tree overlay: apalis-imx8_spi2_spidev_overlay.dtbo"
 fatload \${devtype} \${devnum}:1 \${loadaddr} /overlays/apalis-imx8_hdmi_overlay.dtbo
 fdt apply \${loadaddr}
+echo "Aplying device tree overlay: apalis-imx8_spi2_spidev_overlay.dtbo"
+fatload \${devtype} \${devnum}:1 \${loadaddr} /overlays/apalis-imx8_spi1_spidev_overlay.dtbo
+fdt apply \${loadaddr}
+echo "Aplying device tree overlay: apalis-imx8_spi2_spidev_overlay.dtbo"
+fatload \${devtype} \${devnum}:1 \${loadaddr} /overlays/apalis-imx8_spi2_spidev_overlay.dtbo
+fdt apply \${loadaddr}
+echo "Loading and uncompressing the kernel image and initrd image"
 ext4load \${devtype} \${devnum}:2 \${ramdisk_addr_r} /boot/vmlinuz
 unzip \${ramdisk_addr_r} \${kernel_addr_r}
 ext4load \${devtype} \${devnum}:2 \${ramdisk_addr_r} /boot/initrd.img
+echo "vmlinuz and initrd loaded, instructin u-boot to boot the kernel..."
 booti \${kernel_addr_r} \${ramdisk_addr_r}:\${filesize} \${fdt_addr_r}
 EOF
     mkimage -A arm64 -O linux -T script -C none -n "Boot Script" -d ${mount_point}/boot/boot.cmd ${mount_point}/boot/boot.scr

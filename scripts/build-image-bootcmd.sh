@@ -141,16 +141,6 @@ EOF
 
     # Uboot script
     cat > ${mount_point}/boot/boot.cmd << EOF
-# Ubuntu 20.04 boot.cmd:
-# env set bootargs "root=UUID=${root_uuid} console=ttyLP1,115200 console=tty1 pci=nomsi rootfstype=ext4 rootwait rw"
-# fatload \${devtype} \${devnum}:1 \${fdt_addr_r} /imx8qm-apalis-v1.1-ixora-v1.2.dtb
-# fdt addr \${fdt_addr_r} && fdt resize 0x2000
-# fatload \${devtype} \${devnum}:1 \${loadaddr} /overlays/apalis-imx8_hdmi_overlay.dtbo
-# fdt apply \${loadaddr}
-# ext4load \${devtype} \${devnum}:2 \${ramdisk_addr_r} /boot/vmlinuz
-# unzip \${ramdisk_addr_r} \${kernel_addr_r}
-# ext4load \${devtype} \${devnum}:2 \${ramdisk_addr_r} /boot/initrd.img
-# booti \${kernel_addr_r} \${ramdisk_addr_r}:\${filesize} \${fdt_addr_r}
 #
 # Toradex Boot.cmd for yocto:
 #
@@ -196,7 +186,10 @@ test -n ${boot_part} || env set boot_part ${distro_bootpart}
 test -n ${root_part} || env set root_part 2
 test -n ${boot_devnum} || env set boot_devnum ${devnum}
 test -n ${root_devnum} || env set root_devnum ${devnum}
-test -n ${kernel_image} || env set kernel_image Image.gz
+test -n ${kernel_vmlinuz_image} || env set kernel_vmlinuz_image vmlinuz
+test -n ${kernel_initrd_image} || env set kernel_initrd_image initrd.img
+#test -n ${kernel_image} || env set kernel_image Image.gz
+test -n ${kernel_image} || env set kernel_image vmlinuz
 test -n ${boot_devtype} || env set boot_devtype ${devtype}
 test -n ${overlays_file} || env set overlays_file "overlays.txt"
 test -n ${overlays_prefix} || env set overlays_prefix "overlays/"
@@ -238,8 +231,11 @@ else
     else
         if test ${kernel_image} = "Image.gz"; then
             env set kernel_addr_load ${loadaddr}
-            env set bootcmd_unzip 'unzip ${kernel_addr_load} ${kernel_addr_r}'
-        else
+            env set bootcmd_unzip 'unzip ${kernel_addr_load} ${kernel_addr_r} '
+        elseif test ${kernel_image} = "vmlinuz"; then
+            env set kernel_addr_load ${loadaddr}
+            env set bootcmd_unzip 'unzip ${kernel_addr_load} ${kernel_addr_r} && ${load_cmd} \\${kernel_addr_load} \\${kernel_initrd_image}'
+        else 
             env set kernel_addr_load ${kernel_addr_r}
             env set bootcmd_unzip ';'
         fi
