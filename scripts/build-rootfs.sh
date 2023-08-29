@@ -1,5 +1,11 @@
 #!/bin/bash
 
+echo ""
+echo "#######################"
+echo "##  build-rootfs.sh  ##"
+echo "#######################"
+echo ""
+
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
 
@@ -17,11 +23,11 @@ if [ ! -d linux-toradex ]; then
 fi
 
 # Download and extract the IMX Firmware
-if [ ! -d firmware-imx-8.15 ]; then
-    wget -nc https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/firmware-imx-8.15.bin
-    chmod u+x firmware-imx-8.15.bin
-    ./firmware-imx-8.15.bin --auto-accept --force
-    rm -f firmware-imx-8.15.bin
+if [ ! -d firmware-imx-8.18.1 ]; then
+    wget -nc https://www.nxp.com/lgfiles/NMG/MAD/YOCTO/firmware-imx-8.18.1.bin
+    chmod u+x firmware-imx-8.18.1.bin
+    ./firmware-imx-8.18.1.bin --auto-accept --force
+    rm -f firmware-imx-8.18.1.bin
 fi
 
 # These env vars can cause issues with chroot
@@ -31,7 +37,7 @@ unset TMPDIR
 
 # Debootstrap options
 arch=arm64
-release=focal
+release=jammy
 mirror=http://ports.ubuntu.com/ubuntu-ports
 chroot_dir=rootfs
 
@@ -41,10 +47,11 @@ umount -lf ${chroot_dir}/* 2> /dev/null || true
 rm -rf ${chroot_dir}
 mkdir -p ${chroot_dir}
 
-# Install the base system into a directory 
+echo "# Install the base system into a directory"
 qemu-debootstrap --arch ${arch} ${release} ${chroot_dir} ${mirror}
+#debootstrap --arch ${arch} ${release} ${chroot_dir} ${mirror}
 
-# Use a more complete sources.list file 
+echo "# Use a more complete sources.list file "
 cat > ${chroot_dir}/etc/apt/sources.list << EOF
 # See http://help.ubuntu.com/community/UpgradeNotes for how to upgrade to
 # newer versions of the distribution.
@@ -90,20 +97,20 @@ deb ${mirror} ${release}-security multiverse
 # deb-src ${mirror} ${release}-security multiverse
 EOF
 
-# Mount the temporary API filesystems
+echo "# Mount the temporary API filesystems"
 mkdir -p ${chroot_dir}/{proc,sys,run,dev,dev/pts}
 mount -t proc /proc ${chroot_dir}/proc
 mount -t sysfs /sys ${chroot_dir}/sys
 mount -o bind /dev ${chroot_dir}/dev
 mount -o bind /dev/pts ${chroot_dir}/dev/pts
 
-# Copy the the kernel, modules, and headers to the rootfs
+echo "# Copy the the kernel, modules, and headers to the rootfs"
 if ! cp linux-{headers,image,libc}-*.deb ${chroot_dir}/tmp; then
     echo "Error: could not find the kernel deb packages, please run build-kernel.sh"
     exit 1
 fi
 
-# Download and update packages
+echo "# Download and update packages phase 1"
 cat << EOF | chroot ${chroot_dir} /bin/bash
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
@@ -138,10 +145,10 @@ i2c-tools u-boot-tools binfmt-support
 apt-get -y autoremove && apt-get -y clean && apt-get -y autoclean
 EOF
 
-# Grab the kernel version
+echo "# Grab the kernel version"
 kernel_version="$(sed -e 's/.*"\(.*\)".*/\1/' linux-toradex/include/generated/utsrelease.h)"
 
-# Install kernel, modules, and headers
+echo "# Install kernel, modules, and headers"
 cat << EOF | chroot ${chroot_dir} /bin/bash
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
@@ -162,7 +169,7 @@ ln -s System.map-${kernel_version} System.map
 ln -s config-${kernel_version} config
 EOF
 
-# Create user accounts
+echo "# Create user accounts"
 cat << EOF | chroot ${chroot_dir} /bin/bash
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
@@ -178,7 +185,7 @@ echo -e "root\nroot" | passwd ubuntu
 echo -e "root\nroot" | passwd
 EOF
 
-# Create swapfile
+echo "# Create swapfile"
 cat << EOF | chroot ${chroot_dir} /bin/bash
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
@@ -189,13 +196,13 @@ mkswap /tmp/swapfile
 mv /tmp/swapfile /swapfile
 EOF
 
-# DNS
+echo "# Configuring DNS"
 echo "nameserver 8.8.8.8" > ${chroot_dir}/etc/resolv.conf
 
-# Hostname
+echo "# Configuring  Hostname"
 echo "apalis-imx8" > ${chroot_dir}/etc/hostname
 
-# Networking interfaces
+echo "# Configuring Networking interfaces"
 cat > ${chroot_dir}/etc/network/interfaces << EOF
 auto lo
 iface lo inet loopback
@@ -211,7 +218,7 @@ iface wlx34c9f092281a inet dhcp
     wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 EOF
 
-# Hosts file
+echo "# Configuring Hosts file"
 cat > ${chroot_dir}/etc/hosts << EOF
 127.0.0.1       localhost
 127.0.1.1       apalis-imx8
@@ -223,7 +230,7 @@ ff02::2         ip6-allrouters
 ff02::3         ip6-allhosts
 EOF
 
-# WIFI
+echo "# Configuring WIFI"
 cat > ${chroot_dir}/etc/wpa_supplicant/wpa_supplicant.conf << EOF
 ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
 update_config=1
@@ -244,7 +251,7 @@ network={
 }
 EOF
 
-# Serial console resize script
+echo "# Configuring Serial console resize script"
 cat > ${chroot_dir}/etc/profile.d/resize.sh << 'EOF'
 if [ -t 0 -a $# -eq 0 ]; then
     if [ ! -x @BINDIR@/resize ] ; then
@@ -288,7 +295,7 @@ if [ -t 0 -a $# -eq 0 ]; then
 fi
 EOF
 
-# Expand root filesystem on first boot
+echo "# Configuring to Expand root filesystem on first boot"
 cat > ${chroot_dir}/etc/init.d/expand-rootfs.sh << 'EOF'
 #!/bin/bash
 ### BEGIN INIT INFO
@@ -325,46 +332,51 @@ update-rc.d expand-rootfs.sh remove
 EOF
 chmod +x ${chroot_dir}/etc/init.d/expand-rootfs.sh
 
-# Install init script
+echo "# Install init script"
 chroot ${chroot_dir} /bin/bash -c "update-rc.d expand-rootfs.sh defaults"
 
-# Set term for serial tty
+echo "# Set term for serial tty"
 mkdir -p ${chroot_dir}/lib/systemd/system/serial-getty@.service.d
 echo "[Service]" > ${chroot_dir}/lib/systemd/system/serial-getty@.service.d/10-term.conf
 echo "Environment=TERM=linux" >> ${chroot_dir}/lib/systemd/system/serial-getty@.service.d/10-term.conf
 
-# Remove release upgrade motd
+echo "# Remove release upgrade motd"
 rm -f ${chroot_dir}/var/lib/ubuntu-release-upgrader/release-upgrade-available
 sed -i 's/^Prompt.*/Prompt=never/' ${chroot_dir}/etc/update-manager/release-upgrades
 
-# Copy the hdmi firmware
+echo "# Copy the hdmi firmware"
 mkdir -p ${chroot_dir}/lib/firmware/imx/hdmi
-cp firmware-imx-8.15/firmware/hdmi/cadence/* ${chroot_dir}/lib/firmware/imx/hdmi
+cp firmware-imx-8.18.1/firmware/hdmi/cadence/* ${chroot_dir}/lib/firmware/imx/hdmi
 
-# Copy the vpu firmware
+echo "# Copy the vpu firmware"
 mkdir -p ${chroot_dir}/lib/firmware/vpu
-cp firmware-imx-8.15/firmware/vpu/* ${chroot_dir}/lib/firmware/vpu
+cp firmware-imx-8.18.1/firmware/vpu/* ${chroot_dir}/lib/firmware/vpu
 
 # Umount the temporary API filesystems
 umount -lf ${chroot_dir}/dev/pts 2> /dev/null || true
 umount -lf ${chroot_dir}/* 2> /dev/null || true
 
-# Tar the entire rootfs
-cd ${chroot_dir} && XZ_OPT="-0 -T0" tar -cpJf ../ubuntu-20.04-preinstalled-server-arm64-apalis.rootfs.tar.xz . && cd ..
+echo "# Tar the entire rootfs phase 1"
+cd ${chroot_dir} && XZ_OPT="-0 -T0" tar -cpJf ../ubuntu-22.04-preinstalled-server-arm64-apalis.rootfs.tar.xz . && cd ..
 
-# Mount the temporary API filesystems
+echo "# Mount the temporary API filesystems"
 mkdir -p ${chroot_dir}/{proc,sys,run,dev,dev/pts}
 mount -t proc /proc ${chroot_dir}/proc
 mount -t sysfs /sys ${chroot_dir}/sys
 mount -o bind /dev ${chroot_dir}/dev
 mount -o bind /dev/pts ${chroot_dir}/dev/pts
 
-# Download and update packages
+cp -r ../debs ${chroot_dir}/tmp
+
+echo "# Download and update packages"
 cat << EOF | chroot ${chroot_dir} /bin/bash
 set -eE 
 trap 'echo Error: in $0 on line $LINENO' ERR
 
-# Install dependencies
+dpkg --force-overwrite --no-debsig --install /tmp/debs/libnettle7/*.deb
+dpkg --force-overwrite --no-debsig --install /tmp/debs/libssl1/*.deb
+
+echo "### Install dependencies"
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
 v4l-utils alsa-utils libglib2.0-dev libpango1.0-dev libcairo2 libtbb2 \
 libflac8 libxfont2 libpciaccess-dev x11-xkb-utils libxshmfence1 libxinerama1 \
@@ -373,27 +385,27 @@ libxaw7 libtinfo5 libxkbcommon-dev libnss3 libwebpdemux2 libxslt1.1 libfaad2 \
 libinput10 libpixman-1-0 libxkbcommon0 libpng16-16 libfontconfig1 libxcb-shm0 \
 libxcb-render0 libxrender1 libthai0 libharfbuzz0b libcolord2 libpangocairo-1.0-0 \
 libxcb-composite0 libxcb-xfixes0 libatk-bridge2.0-0 libatk1.0-0 libcurl4 \
-libdc1394-22 libmodplug1 libsoup2.4-1 librsvg2-2 libopenmpt0 libmpcdec6 libzbar0 \
-libbs2b0 libvpx6 libv4l-0 libavfilter7 libvo-aacenc0 libgdk-pixbuf2.0-0 libde265-0 \
+libdc1394-25 libmodplug1 libsoup2.4-1 librsvg2-2 libopenmpt0 libmpcdec6 libzbar0 \
+libbs2b0 libvpx7 libv4l-0 libavfilter7 libvo-aacenc0 libgdk-pixbuf2.0-0 libde265-0 \
 libmms0 libmjpegutils-2.1-0 libvo-amrwbenc0 libwildmidi2 libmpeg2encpp-2.1-0 \
-libvisual-0.4-0 libsrt1 libtag1-dev libcaca0 libavfilter7 libcodec2-0.9 libxdamage1 \
-libshout3 libchromaprint1 libusrsctp1 libjack0 libsbc1 libmplex2-2.1-0 libavc1394-0 \
-libsoundtouch1 libfluidsynth2 libshout3 libdca0 libofa0 libsrtp2-1 libdv4 libkate1 \
+libvisual-0.4-0 libsrt1.4-openssl  libsrt1.4-gnutls libtag1-dev libcaca0 libavfilter7 libcodec2-1.0 libxdamage1 \
+libshout3 libchromaprint1 libusrsctp2 libjack0 libsbc1 libmplex2-2.1-0 libavc1394-0 \
+libsoundtouch1 libfluidsynth3 libshout3 libdca0 libofa0 libsrtp2-1 libdv4 libkate1 \
 libwebrtc-audio-processing1 libaa1 libnice10 libcurl4-gnutls-dev libdvdnav4 libnspr4 \
 libiec61883-0 libgraphene-1.0-0 libspandsp2 liborc-0.4-0 libcdparanoia0 liba52-0.7.4 \
-libcdio18 libmpeg2-4 libopencore-amrnb0 libopencore-amrwb0 libsidplay1v5 libilmbase24 \
-libopenexr24 libxv1 libx11-xcb1 libtheora0 nettle-bin nettle-dev googletest mpg123 \
-libsoup2.4-dev libassimp5 gtk-update-icon-cache hicolor-icon-theme
+libcdio19 libmpeg2-4 libopencore-amrnb0 libopencore-amrwb0 libsidplay1v5 libilmbase25 \
+libopenexr25 libxv1 libx11-xcb1 libtheora0 nettle-bin nettle-dev googletest mpg123 \
+libsoup2.4-dev libassimp5 gtk-update-icon-cache hicolor-icon-theme libffi7 libssl3
 
-# GPU benchmark tools
+echo "### GPU benchmark tools"
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
 glmark2 glmark2-es2 glmark2-wayland glmark2-es2-wayland 
 
-# Install default wallpapers
+echo "### Install default wallpapers"
 DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
 ubuntu-wallpapers
 
-# Clean package cache
+echo "### Clean package cache"
 apt-get -y autoremove && apt-get -y clean && apt-get -y autoclean
 EOF
 
@@ -450,7 +462,7 @@ apt-get -y autoremove && apt-get -y clean && apt-get -y autoclean
 rm -rf /tmp/*
 EOF
 
-# Service to start weston
+echo "# Service to start weston"
 cat > ${chroot_dir}/lib/systemd/system/weston.service << EOF
 [Unit]
 Description=Weston Wayland Compositor (on tty7)
@@ -489,10 +501,10 @@ ExecStart=/usr/bin/weston --log=\${XDG_RUNTIME_DIR}/weston.log \$OPTARGS
 WantedBy=multi-user.target
 EOF
 
-# Enable weston service
+echo "# Enable weston service"
 chroot ${chroot_dir} /bin/bash -c "systemctl enable weston.service"
 
-# Configuration file for weston
+echo "# Configuration file for weston"
 mkdir -p ${chroot_dir}/etc/xdg/weston
 cat > ${chroot_dir}/etc/xdg/weston/weston.ini << EOF
 [core]
@@ -535,15 +547,16 @@ path=/usr/lib/chromium/chromium-bin --no-sandbox --use-gl=egl --enable-features=
 command=@bindir@/weston --backend=rdp-backend.so --shell=fullscreen-shell.so --no-clients-resize
 EOF
 
-# Create links to shared libraries
+echo "# Create links to shared libraries"
 chroot ${chroot_dir} /bin/bash -c "ldconfig"
 
-# Gstreamer plugin search path
+echo "# Gstreamer plugin search path"
 echo GST_PLUGIN_PATH="\"/usr/lib/gstreamer-1.0"\" >> ${chroot_dir}/etc/environment
 
-# Umount the temporary API filesystems
+echo "# Umount the temporary API filesystems"
 umount -lf ${chroot_dir}/dev/pts 2> /dev/null || true
 umount -lf ${chroot_dir}/* 2> /dev/null || true
 
-# Tar the entire rootfs
-cd ${chroot_dir} && XZ_OPT="-0 -T0" tar -cpJf "../ubuntu-20.04-preinstalled-desktop-weston-arm64-apalis.rootfs.tar.xz" . && cd ..
+echo "# Tar the entire rootfs phase 2"
+cd ${chroot_dir} && XZ_OPT="-0 -T0" tar -cpJf "../ubuntu-22.04-preinstalled-desktop-weston-arm64-apalis.rootfs.tar.xz" . && cd ..
+echo "Finished build-rootfs.sh"
